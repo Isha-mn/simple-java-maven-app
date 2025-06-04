@@ -1,28 +1,41 @@
 pipeline {
     agent any
-    options {
-        skipStagesAfterUnstable()
-    }
+
     stages {
+        stage('Checkout') {
+            steps {
+                // Check out code from Git repository
+                git url: 'https://github.com/jenkins-docs/simple-java-maven-app.git', branch: 'master'
+            }
+        }
+
         stage('Build') {
             steps {
-                sh 'mvn -B -DskipTests clean package'
+                // Run Maven build
+                sh 'mvn clean package'
             }
         }
+
         stage('Test') {
             steps {
+                // Run tests
                 sh 'mvn test'
             }
-            post {
-                always {
-                    junit 'target/surefire-reports/*.xml'
-                }
-            }
         }
-        stage('Deliver') { 
-            steps {
-                sh './jenkins/scripts/deliver.sh' 
-            }
+    }
+
+    post {
+        always {
+            // Archive test reports
+            junit '**/target/surefire-reports/*.xml'
+        }
+
+        success {
+            echo 'Build and tests succeeded!'
+        }
+
+        failure {
+            echo 'Build or tests failed.'
         }
     }
 }
